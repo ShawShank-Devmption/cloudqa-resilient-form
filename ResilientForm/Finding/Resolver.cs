@@ -2,8 +2,13 @@ using OpenQA.Selenium;
 
 namespace ResilientForm.Finding;
 
-/// <summary>A control found on the page. Elements: the control, or every radio in a group.</summary>
-public sealed record Candidate(FieldKind Kind, string Scope, Clues Clues, IReadOnlyList<IWebElement> Elements);
+/// <summary>
+/// A control found on the page. Elements: the control, or every radio in a group. Locators: for each
+/// element, a CSS selector that matches only it within its own document or shadow root, prefixed
+/// with "shadow×N › " when it sits N shadow roots deep.
+/// </summary>
+public sealed record Candidate(FieldKind Kind, string Scope, Clues Clues, IReadOnlyList<IWebElement> Elements,
+    IReadOnlyList<string> Locators);
 
 public sealed record Ranked(Candidate Candidate, Score Score);
 

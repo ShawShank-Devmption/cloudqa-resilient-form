@@ -33,7 +33,7 @@ public static class PageScanner
     static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
 
     sealed record RawCandidate(string Kind, string Scope, string[] Labels, string Near, string Placeholder,
-        string Aria, string[] Attributes, string[] Options, int[] Elements);
+        string Aria, string[] Attributes, string[] Options, int[] Elements, string[]? Locators);
     sealed record RawFrame(string Label, int Element);
     sealed record RawScan(RawCandidate[] Candidates, RawFrame[] Frames);
 
@@ -69,7 +69,8 @@ public static class PageScanner
             c.Kind switch { "text" => FieldKind.Text, "radio" => FieldKind.RadioGroup, _ => FieldKind.Select },
             c.Scope,
             new Clues(c.Labels, c.Near, c.Placeholder, c.Aria, c.Attributes, c.Options),
-            [.. c.Elements.Select(i => elements[i])]));
+            [.. c.Elements.Select(i => elements[i])],
+            c.Locators ?? []));
 
         var copies = Resolver.Resolve(candidates)
             .Select(s => new FormCopy($"{location} › {s.Scope}", path, s.Fields))
@@ -108,7 +109,10 @@ public static class PageScanner
         return new StreamReader(stream).ReadToEnd();
     }
 
-    /// <summary>The scoreboard: for each copy and field, the winner and the closest runners-up, with reasons.</summary>
+    /// <summary>
+    /// The scoreboard: for each copy and field, the winner and the closest runners-up, with reasons
+    /// and the locator of each candidate (the first radio, for a group).
+    /// </summary>
     public static string Report(IReadOnlyList<FormCopy> copies)
     {
         var report = new StringBuilder($"{copies.Count} form cop{(copies.Count == 1 ? "y" : "ies")} found\n");
@@ -134,6 +138,6 @@ public static class PageScanner
     {
         var c = candidate.Clues;
         var name = c.Labels.FirstOrDefault() ?? (c.Near.Length > 0 ? c.Near : null) ?? c.Attributes.FirstOrDefault() ?? c.Placeholder;
-        return $"{candidate.Kind} \"{(name.Length > 30 ? name[..30] + "…" : name)}\"";
+        return $"{candidate.Kind} \"{(name.Length > 30 ? name[..30] + "…" : name)}\" [{candidate.Locators.FirstOrDefault()}]";
     }
 }

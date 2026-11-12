@@ -100,6 +100,35 @@ function scopeOf(el) {
   return scopes.get(owner);
 }
 
+// A CSS selector that matches only this element within its own document or shadow root: by id
+// or name when that is unique there, else a path of steps down from the root (or from the
+// closest ancestor with a unique id). Used for reporting; the finder never locates by it.
+function locatorOf(el) {
+  const root = el.getRootNode();
+  const unique = selector => root.querySelectorAll(selector).length === 1;
+  const quote = value => `"${value.replace(/["\\]/g, '\\$&')}"`;
+  const tag = el.tagName.toLowerCase();
+  const name = el.getAttribute('name');
+  const value = el.getAttribute('value');
+  const short = [
+    el.id && `${tag}#${CSS.escape(el.id)}`,
+    name && `${tag}[name=${quote(name)}]`,
+    name && value && `${tag}[name=${quote(name)}][value=${quote(value)}]`,
+  ].filter(Boolean).find(unique);
+
+  const steps = [];
+  for (let node = el; !short && node && node.nodeType === Node.ELEMENT_NODE; node = node.parentNode) {
+    if (node !== el && node.id && unique('#' + CSS.escape(node.id))) {
+      steps.unshift('#' + CSS.escape(node.id));
+      break;
+    }
+    const twins = [...node.parentNode.children].filter(child => child.tagName === node.tagName);
+    steps.unshift(node.tagName.toLowerCase() + (twins.length > 1 ? `:nth-of-type(${twins.indexOf(node) + 1})` : ''));
+  }
+  const depth = shadowDepth(el);
+  return (depth ? `shadow×${depth} › ` : '') + (short || steps.join(' > '));
+}
+
 const elements = [];
 const ref = el => elements.push(el) - 1;
 const candidates = [];
@@ -117,6 +146,7 @@ for (const el of all('input, select')) {
     attributes: attributes(el),
     options: [],
     elements: [ref(el)],
+    locators: [locatorOf(el)],
   });
 }
 
@@ -149,6 +179,7 @@ for (const [container, byName] of groups)
       attributes: name ? [name] : [],
       options: radios.map(optionText),
       elements: radios.map(ref),
+      locators: radios.map(locatorOf),
     });
   }
 

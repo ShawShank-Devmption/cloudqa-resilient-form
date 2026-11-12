@@ -6,7 +6,7 @@ namespace ResilientForm.Tests;
 public class ResolverTests
 {
     static Candidate Text(string scope, string label) =>
-        new(FieldKind.Text, scope, new Clues([label], "", "", "", [], []), []);
+        new(FieldKind.Text, scope, new Clues([label], "", "", "", [], []), [], []);
 
     static Resolution FirstName(ScopeResult scope) => scope.Fields.Single(f => f.Field == FieldSpec.FirstName);
 
