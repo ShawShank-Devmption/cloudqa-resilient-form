@@ -1,0 +1,21 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="expected-copies" content="1"><title>Restructured</title></head>
+<body>
+<!-- No ids or names to lean on: a table layout, labels that wrap their inputs, a fieldset with a legend. -->
+<div><div><div>
+<form>
+  <table>
+    <tr><td>State</td>
+        <td><select data-truth="state"><option>Please choose</option><option>India</option><option>Peru</option></select></td></tr>
+    <tr><td colspan="2"><label>First name <input type="text" data-truth="first-name"></label></td></tr>
+    <tr><td colspan="2">
+      <fieldset><legend>Gender</legend>
+        <label><input type="radio" name="x1" data-truth="gender"> Male</label>
+        <label><input type="radio" name="x1" data-truth="gender"> Female</label>
+        <label><input type="radio" name="x1" data-truth="gender"> Transgender</label>
+      </fieldset></td></tr>
+    <tr><td>Last name</td><td><input type="text"></td></tr>
+  </table>
+</form>
+</div></div></div>
+</body></html>

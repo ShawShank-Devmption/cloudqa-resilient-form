@@ -1,0 +1,23 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="expected-copies" content="1"><title>Renamed attributes</title></head>
+<body>
+<!-- Every id, name and class is renamed, and the original ids are handed to the wrong fields. -->
+<form id="q7" class="zz">
+  <div class="r1"><label for="a1">First Name</label>
+    <input id="a1" name="f_01" class="k2" type="text" placeholder="Name" data-truth="first-name"></div>
+  <div class="r1"><label for="fname">Last Name</label>
+    <input id="fname" name="First Name" class="k2" type="text" placeholder="Surname"></div>
+  <div class="r1"><label class="k9">Gender</label>
+    <div class="k3">
+      <input id="state" type="radio" name="g_9" value="M" data-truth="gender"><span>Male</span>
+      <input id="r2" type="radio" name="g_9" value="F" data-truth="gender"><span>Female</span>
+      <input id="r3" type="radio" name="g_9" value="T" data-truth="gender"><span>Transgender</span>
+    </div></div>
+  <div class="r1"><label for="male">Country</label>
+    <input id="male" name="State" type="text" placeholder="Country"></div>
+  <div class="r1"><label for="s9">State</label>
+    <select id="s9" name="sel_4" data-truth="state">
+      <option>-- Select Country --</option><option>Japan</option><option>India</option>
+    </select></div>
+</form>
+</body></html>

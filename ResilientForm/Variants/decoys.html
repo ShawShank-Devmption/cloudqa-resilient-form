@@ -1,0 +1,21 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="expected-copies" content="1"><title>Decoys</title></head>
+<body>
+<!-- Look-alikes placed before the real fields: each one matches some clues but not the right ones. -->
+<div style="display:none"><label for="h1">First Name</label><input id="h1" type="text"></div>
+<form id="profile">
+  <div><label for="search">Search people</label><input id="search" type="text" placeholder="First name"></div>
+  <div><label for="fathers">Father's First Name</label><input id="fathers" type="text" name="fatherFirstName"></div>
+  <div><label for="state">Country</label>
+    <select id="state" name="State"><option>-- Select --</option><option>India</option></select></div>
+  <div><label>Title</label>
+    <div><input type="radio" name="gender" value="Mr"><span>Mr</span>
+         <input type="radio" name="gender" value="Mrs"><span>Mrs</span></div></div>
+  <div><label for="real-first">First Name</label><input id="real-first" type="text" data-truth="first-name"></div>
+  <div><label>Gender</label>
+    <div><input type="radio" name="sex" data-truth="gender"><span>Male</span>
+         <input type="radio" name="sex" data-truth="gender"><span>Female</span></div></div>
+  <div><label for="region">State</label>
+    <select id="region" data-truth="state"><option>-- Select Country --</option><option>India</option></select></div>
+</form>
+</body></html>

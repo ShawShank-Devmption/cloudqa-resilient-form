@@ -1,0 +1,47 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="expected-copies" content="4"><title>Frames and shadow DOM</title></head>
+<body>
+<!-- Four copies of the form: the page itself, an iframe, an open shadow root, and a shadow root whose
+     labels sit beside <slot>s while the inputs stay in the page (like the live page's first shadow copy). -->
+<template id="copy">
+  <form>
+    <div><label for="fname">First Name</label><input id="fname" type="text" data-truth="first-name"></div>
+    <div><label for="lname">Last Name</label><input id="lname" type="text"></div>
+    <div><label>Gender</label>
+      <div><input type="radio" name="gender" data-truth="gender"><span>Male</span>
+           <input type="radio" name="gender" data-truth="gender"><span>Female</span></div></div>
+    <div><label for="state">State</label>
+      <select id="state" data-truth="state"><option>-- Select Country --</option><option>India</option></select></div>
+  </form>
+</template>
+
+<div id="main"></div>
+<iframe id="frame" style="width:100%;height:320px"></iframe>
+<div id="host"></div>
+<form id="slotted-form"><slotted-copy>
+  <section slot="first"><input type="text" placeholder="Name" data-truth="first-name"></section>
+  <section slot="last"><input type="text" placeholder="Name"></section>
+  <section slot="gender">
+    <input type="radio" name="gender" data-truth="gender"><span>Male</span>
+    <input type="radio" name="gender" data-truth="gender"><span>Female</span>
+  </section>
+  <section slot="state"><select data-truth="state"><option>-- Select Country --</option><option>India</option></select></section>
+</slotted-copy></form>
+
+<script>
+  const copy = document.getElementById('copy').innerHTML;
+  document.getElementById('main').innerHTML = copy;
+  document.getElementById('frame').srcdoc = copy;
+  document.getElementById('host').attachShadow({ mode: 'open' }).innerHTML = copy;
+  customElements.define('slotted-copy', class extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' }).innerHTML = `
+        <div><label>First Name</label><slot name="first"></slot></div>
+        <div><label>Last Name</label><slot name="last"></slot></div>
+        <div><label>Gender</label><div><slot name="gender"></slot></div></div>
+        <div><label>State</label><slot name="state"></slot></div>`;
+    }
+  });
+</script>
+</body></html>
