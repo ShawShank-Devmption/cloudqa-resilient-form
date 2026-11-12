@@ -15,6 +15,11 @@ public class FormTests(Target target)
     IWebDriver driver = null!;
     IReadOnlyList<FormCopy> copies = [];
 
+    // For the summary: every form object a test used, and what each form copy was last filled with.
+    readonly List<(FormCopy Copy, PracticeForm Form)> opened = [];
+    readonly List<string> filledOrder = [];
+    readonly Dictionary<string, Dictionary<FieldSpec, (string Locator, string Value)>> filled = [];
+
     [OneTimeSetUp]
     public void StartBrowser()
     {
@@ -25,7 +30,52 @@ public class FormTests(Target target)
     }
 
     [OneTimeTearDown]
-    public void StopBrowser() => driver.Dispose();
+    public void StopBrowser()
+    {
+        // Progress output is shown in the terminal even when the tests pass.
+        TestContext.Progress.WriteLine(Summary());
+        driver.Dispose();
+    }
+
+    [TearDown]
+    public void RememberWhatWasFilled()
+    {
+        foreach (var (copy, form) in opened)
+            foreach (var (field, entry) in form.Filled)
+            {
+                if (!filled.ContainsKey(copy.Location))
+                {
+                    filled[copy.Location] = [];
+                    filledOrder.Add(copy.Location);
+                }
+                filled[copy.Location][field] = entry;
+            }
+        opened.Clear();
+    }
+
+    string Summary()
+    {
+        var text = new System.Text.StringBuilder(
+            $"\n══ Fields filled on {target.Name}: {filledOrder.Count} form cop{(filledOrder.Count == 1 ? "y" : "ies")} ══\n" +
+            "   (locator = CSS selector within the form's own document or shadow root; value = the last one set)\n");
+        for (var i = 0; i < filledOrder.Count; i++)
+        {
+            text.Append($"[{i + 1}] {filledOrder[i]}\n");
+            foreach (var field in FieldSpec.All.Where(filled[filledOrder[i]].ContainsKey))
+            {
+                var (locator, value) = filled[filledOrder[i]][field];
+                text.Append($"    {field.Name,-10} {locator}  ←  \"{value}\"\n");
+            }
+        }
+        return text.ToString();
+    }
+
+    PracticeForm Open(FormCopy copy)
+    {
+        var form = new PracticeForm(driver, copy);
+        opened.Add((copy, form));
+        return form;
+    }
 
     [SetUp]
     public void OpenPage()
@@ -35,7 +85,7 @@ public class FormTests(Target target)
     }
 
     IEnumerable<(FormCopy Copy, PracticeForm Form)> CopiesWith(FieldSpec field) =>
-        copies.Where(c => c[field].Winner is not null).Select(c => (c, new PracticeForm(driver, c)));
+        copies.Where(c => c[field].Winner is not null).Select(c => (c, Open(c)));
 
     [Test]
     public void Every_copy_resolves_its_fields()
@@ -62,15 +112,28 @@ public class FormTests(Target target)
                         Assert.Fail($"{where}: not found");
                     else if (field.Winner is null)
                         Assert.Warn($"{where}: not found in this copy");
-                    else if (expected is not null)
+                    else
                     {
                         copy.Enter(driver);
-                        var truth = field.Winner.Candidate.Elements.Select(e => e.GetAttribute("data-truth"));
-                        Assert.That(truth, Is.All.EqualTo(TruthTag(field.Field)), $"{where}: picked the wrong element");
+                        var picked = field.Winner.Candidate;
+                        Assert.That(picked.Locators, Has.Count.EqualTo(picked.Elements.Count), $"{where}: a locator for each element");
+                        foreach (var (element, locator) in picked.Elements.Zip(picked.Locators))
+                            Assert.That(LeadsTo(locator, element), $"{where}: locator '{locator}' does not lead to the picked element");
+
+                        if (expected is not null)
+                        {
+                            var truth = picked.Elements.Select(e => e.GetAttribute("data-truth"));
+                            Assert.That(truth, Is.All.EqualTo(TruthTag(field.Field)), $"{where}: picked the wrong element");
+                        }
                     }
                 }
         });
     }
+
+    /// <summary>The locator matches this element and nothing else in its document or shadow root.</summary>
+    bool LeadsTo(string locator, IWebElement element) => (bool)((IJavaScriptExecutor)driver).ExecuteScript(
+        "const found = arguments[0].getRootNode().querySelectorAll(arguments[1]); return found.length === 1 && found[0] === arguments[0];",
+        element, locator.Split(" › ")[^1])!;
 
     static string TruthTag(FieldSpec field) => field.Name.ToLowerInvariant().Replace(' ', '-');
 
@@ -113,7 +176,7 @@ public class FormTests(Target target)
         // The main form: the first copy in the top page itself, not inside an iframe or shadow root.
         var main = copies.FirstOrDefault(c => c.FramePath.Count == 0);
         Assert.That(main, Is.Not.Null, "no form copy in the top page");
-        var form = new PracticeForm(driver, main!);
+        var form = Open(main!);
         var state = form.StateOptions.Contains("India") ? "India" : form.StateOptions[^1];
 
         form.SetFirstName("Ada");
@@ -127,7 +190,11 @@ public class FormTests(Target target)
             Assert.That(form.SelectedState, Is.EqualTo(state));
         });
 
-        Thread.Sleep(Settings.Hold);
+        if (Settings.Hold > TimeSpan.Zero)
+        {
+            form.Highlight();
+            Thread.Sleep(Settings.Hold);
+        }
     }
 
     [Test]

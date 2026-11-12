@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <!-- Lists each test and shows the "Fields filled" summary in the terminal even when everything passes. -->
+    <VSTestLogger Condition="'$(VSTestLogger)' == ''">console%3Bverbosity=normal</VSTestLogger>
   </PropertyGroup>
 
   <ItemGroup>
